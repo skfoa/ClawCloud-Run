@@ -648,13 +648,13 @@ class AutoLogin:
         base_url = self.get_base_url()
         self.log(f"使用区域 URL: {base_url}", "INFO")
         
-     pages_to_visit = [
-    (f"{base_url}/", "控制台"),
-    (f"{base_url}/apps", "应用"),
-    # --- 以下是你手工追加的精准保活区 ---
-    ("https://us-east-1.run.claw.cloud/apps", "美东巡逻"),
-    ("https://ap-northeast-1.run.claw.cloud/apps", "日本巡逻"),
-]
+        pages_to_visit = [
+        (f"{base_url}/", "控制台"),
+        (f"{base_url}/apps", "应用"),
+        # --- 以下是你手工追加的精准保活区 ---
+        ("https://us-east-1.run.claw.cloud/apps", "美东巡逻"),
+        ("https://ap-northeast-1.run.claw.cloud/apps", "日本巡逻"),
+    ]
         
         # 如果检测到了区域，可以额外访问一些区域特定页面
         if self.detected_region:
