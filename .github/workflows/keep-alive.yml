@@ -40,10 +40,18 @@ jobs:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: python scripts/auto_login.py
         
-#      - name: 私有仓库 Actions 保活
-#        run: |
-#          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-#          git config --local user.name "github-actions[bot]"
-#          git pull --rebase || true
-#          git commit --allow-empty -m "Chore: 仓库 Actions 保活 [skip ci]"
-#          git push
+      - name: 私有仓库 Actions 保活
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git pull --rebase || true
+          git commit --allow-empty -m "Chore: 仓库 Actions 保活 [skip ci]"
+          git push
+
+      - name: 上传运行截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-screenshots
+          path: ./*.png
+          retention-days: 3
