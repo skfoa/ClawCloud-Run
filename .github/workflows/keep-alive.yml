@@ -17,7 +17,8 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # 注意：为了能 push，这里建议用 secrets.REPO_TOKEN
+          token: ${{ secrets.REPO_TOKEN }}
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -45,7 +46,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git pull --rebase || true
-          git commit --allow-empty -m "Chore: 仓库 Actions 保活 [skip ci]"
+          
+          # 核心修改：写入时间戳到 active.log，确保 Git 监测到文件变动
+          echo "Last Active: $(date +'%Y-%m-%d %H:%M:%S')" > active.log
+          git add active.log
+          
+          git commit -m "Chore: 更新活跃日志 [skip ci]"
           git push
 
       - name: 上传运行截图
