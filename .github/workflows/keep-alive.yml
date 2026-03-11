@@ -17,7 +17,6 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          # 注意：为了能 push，这里建议用 secrets.REPO_TOKEN
           token: ${{ secrets.REPO_TOKEN }}
 
       - name: 设置 Python
@@ -47,12 +46,14 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git pull --rebase || true
           
-          # 核心修改：写入时间戳到 active.log，确保 Git 监测到文件变动
+          # 更新活跃日志文件
           echo "Last Active: $(date +'%Y-%m-%d %H:%M:%S')" > active.log
           git add active.log
           
           git commit -m "Chore: 更新活跃日志 [skip ci]"
-          git push
+          
+          # 使用 Token 进行显式推送，解决 403 权限问题
+          git push https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git main
 
       - name: 上传运行截图
         if: always()
