@@ -2,9 +2,10 @@ name: ClawCloud 自动登录保活
 
 on:
   schedule:
-    - cron: '0 1 */5 * *'
+    - cron: '0 1 */5 * *'  # 保持你设定的每5天运行一次
   workflow_dispatch:
 
+# 必须开启写入权限，否则 auto-commit 插件无法工作
 permissions:
   contents: write
 
@@ -17,7 +18,8 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.REPO_TOKEN }}
+          # 使用第三方 commit 插件时，用默认的 GITHUB_TOKEN 即可
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -40,22 +42,33 @@ jobs:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: python scripts/auto_login.py
         
-      - name: 私有仓库 Actions 保活
+      - name: Update README with timestamp
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git pull --rebase || true
+          UTC_TIME=$(date -u +'%Y-%m-%d %H:%M:%S')
+          BJ_TIME=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
           
-          # 更新活跃日志文件
-          echo "Last Active: $(date +'%Y-%m-%d %H:%M:%S')" > active.log
-          git add active.log
+          TIMESTAMP_SECTION="\n## 🕒 最后更新时间\n\n"
+          TIMESTAMP_SECTION+="**UTC**: \`$UTC_TIME\`  \n"
+          TIMESTAMP_SECTION+="**中国时间**: \`$BJ_TIME\`  \n\n"
+          TIMESTAMP_SECTION+="> ⚡ 此时间戳由 GitHub Actions 自动更新，用于触发自动构建。\n"
           
-          git commit -m "Chore: 更新活跃日志 [skip ci]"
+          if grep -q "## 🕒 最后更新时间" README.md; then
+            sed -i '/## 🕒 最后更新时间/,/^## \|^# /{//!d}' README.md
+            sed -i '/## 🕒 最后更新时间/d' README.md
+          fi
           
-          # 使用 Token 进行显式推送，解决 403 权限问题
-          git push https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git main
+          echo -e "$TIMESTAMP_SECTION" >> README.md
 
-      - name: 上传运行截图
+      - name: Auto commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto deploy by Github Actions"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          # 同时捕获 README 变更和 Python 脚本生成的 png 截图
+          file_pattern: 'README.md *.png'
+
+      - name: 上传运行截图至 Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
